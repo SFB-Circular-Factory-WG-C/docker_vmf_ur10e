@@ -14,15 +14,15 @@
 services:
   # Base image containing dependencies.
   base:
-    image: cuda_126_ros2_base:latest
-    container_name: cuda_126_ros2_base
+    image: ros2_base:v0.0.1
+    container_name: ros2_base
     build:
       context: .
-      dockerfile: docker/dockerfile_nvidia_ros
+      dockerfile: docker/Dockerfile
       args:
         ROS_DISTRO: humble
       # no specific build target; Dockerfile isn't multi‑stage with a 'base' stage
-      # target: base
+      target: base
     # Interactive shell
     stdin_open: true
     tty: true
@@ -46,9 +46,9 @@ services:
     # overlay_1 extends the base image and adds the UR10-specific workspace and arm_api2 packages.
   overlay_1:
     extends: base
-    image: ros2_dev_overlay_1:latest
-    container_name: ros2_dev_overlay_1
+    image: overlay_1:v0.0.1
+    container_name: overlay_1
     build:
       context: .
-      dockerfile: docker/dockerfile_ur10_base
-      # target: overlay_1
+      dockerfile: docker/Dockerfile
+      target: overlay_1
