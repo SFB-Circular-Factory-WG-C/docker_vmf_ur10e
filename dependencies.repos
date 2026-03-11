@@ -1,0 +1,19 @@
+repositories:
+  arm_api2:
+    type: git
+    url: git@gitlab.kit.edu:kit/ifl/gruppen/air/ros2/arm_api2.git
+    version: master
+
+  arm_api2_msg:
+    type: git
+    url: git@gitlab.kit.edu:kit/ifl/gruppen/air/ros2/arm_api2_msg.git
+    version: master
+
+  arm_api2_py:
+    type: git
+    url: git@gitlab.kit.edu:unvug/arm_api2_py.git
+    version: main
+
+
+
+

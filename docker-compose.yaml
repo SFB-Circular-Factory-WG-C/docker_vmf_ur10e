@@ -1,0 +1,54 @@
+# Docker Compose file for TurtleBot Behavior Examples
+#
+# Usage:
+#
+# To build the images:
+#   docker compose build
+#
+# To start up a specific service by name:
+#   docker compose up <service_name>
+#
+# To open an interactive shell to a running container:
+#   docker exec -it <container_name> bash
+
+services:
+  # Base image containing dependencies.
+  base:
+    image: cuda_126_ros2_base:latest
+    container_name: cuda_126_ros2_base
+    build:
+      context: .
+      dockerfile: docker/dockerfile_nvidia_ros
+      args:
+        ROS_DISTRO: humble
+      # no specific build target; Dockerfile isn't multi‑stage with a 'base' stage
+      # target: base
+    # Interactive shell
+    stdin_open: true
+    tty: true
+    # Networking and IPC for ROS 2
+    network_mode: host
+    ipc: host
+    # Needed to display graphical applications
+    privileged: True
+    runtime: nvidia
+    environment:
+      # Allows graphical programs in the container.
+      - DISPLAY=${DISPLAY:-:1}
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+    volumes:
+      # Allows graphical programs in the container.
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority
+
+    # overlay_1 extends the base image and adds the UR10-specific workspace and arm_api2 packages.
+  overlay_1:
+    extends: base
+    image: ros2_dev_overlay_1:latest
+    container_name: ros2_dev_overlay_1
+    build:
+      context: .
+      dockerfile: docker/dockerfile_ur10_base
+      # target: overlay_1

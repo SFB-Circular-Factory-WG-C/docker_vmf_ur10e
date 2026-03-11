@@ -1,0 +1,21 @@
+FROM turtlebot3_base:latest
+ARG USERNAME=USERNAME
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+ENV HOME=/home/${USERNAME}
+
+ 
+# Create an overlay Catkin workspace
+RUN mkdir -p $HOME/overlay_ws/src
+WORKDIR $HOME/overlay_ws
+COPY ./tb3_autonomy/ $HOME/overlay_ws/src/tb3_autonomy/
+COPY ./tb3_worlds/ $HOME/overlay_ws/src/tb3_worlds/
+RUN apt-get update -y \
+    && rosdep update \
+    && rosdep install --from-paths src --ignore-src --rosdistro humble -y \
+    && colcon build --symlink-install
+
+COPY ./docker/entrypoint.sh /
+ENTRYPOINT [ "/entrypoint.sh" ]
+ 
+WORKDIR $HOME/overlay_ws
