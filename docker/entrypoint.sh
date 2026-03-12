@@ -20,4 +20,9 @@ fi
 # fi
 
 # Execute the command passed into this entrypoint
-exec "$@"
+if [ $# -eq 0 ]; then
+  exec bash
+else
+  exec "$@"
+fi
+

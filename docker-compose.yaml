@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       args:
-        ROS_DISTRO: humble
+        ROS_DISTRO: ${ROS_DISTRO:-humble}
       # no specific build target; Dockerfile isn't multi‑stage with a 'base' stage
       target: base
     # Interactive shell
@@ -52,8 +52,11 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: overlay_1
+      
     volumes:
-      - /arm_api_py:/home/$USERNAME/wbk_ur10_ws/src/arm_api_py
+      - ./arm_api2_msgs:/home/$USERNAME/wbk_ur10_ws/src/arm_api2_msgs
+      - ./arm_api2:/home/$USERNAME/wbk_ur10_ws/src/arm_api2
+      - ./arm_api2_py:/home/$USERNAME/wbk_ur10_ws/src/arm_api2_py
       - /tmp/.X11-unix:/tmp/.X11-unix
   
   overlay_2:
@@ -65,9 +68,11 @@ services:
       dockerfile: docker/Dockerfile
       target: overlay_2
       shm_size: '40gb'
+      # args:
+      #   ROS_DISTRO: humble
     shm_size: '40gb'
     volumes:
-      - /vmf:/home/$USERNAME/wbk_ur10_ws/src/vmf
+      - ./vmf:/home/$USERNAME/wbk_ur10_ws/src/vmf
       - /tmp/.X11-unix:/tmp/.X11-unix
     network_mode: host
     environment:

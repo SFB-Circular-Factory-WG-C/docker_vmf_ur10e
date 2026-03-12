@@ -96,9 +96,7 @@ RUN apt install software-properties-common -y --no-install-recommends \
 # If you still prefer the ros2-apt-source package, it can be fetched with
 # retries to guard against corruption:
 RUN export ROS_APT_SOURCE_VERSION=$(curl -sSL https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F\" '{print $4}') \
-    && curl -fLSs --retry 3 --retry-connrefused \
-          -o /tmp/ros2-apt-source.deb \
-          "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb" \
+    && curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb" \
     && dpkg -i /tmp/ros2-apt-source.deb
 
 
@@ -107,11 +105,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-desktop \
     ros-dev-tools \
     python3-rosdep \
-    # RViz2 & Gazebo/Ignition relevant packages
+    ros-${ROS_DISTRO}-tf-transformations \
     ros-${ROS_DISTRO}-rqt \
     ros-${ROS_DISTRO}-rqt-common-plugins \
     ros-${ROS_DISTRO}-rviz2 \
     ros-${ROS_DISTRO}-moveit \
+    # ros-${ROS_DISTRO}-moveit-visual-tools \
     ros-${ROS_DISTRO}-ros2-control \
     ros-${ROS_DISTRO}-ros2-controllers \
     ros-${ROS_DISTRO}-tf2-tools \
@@ -156,6 +155,15 @@ RUN pip3 install --index-url https://pypi.org/simple -r requirements.txt \
     && pip3 install --index-url https://pypi.org/simple --ignore-installed open3d \
     && pip3 install --index-url https://pypi.org/simple numpy==1.26.4
 
+WORKDIR $HOME/wbk_ur10_ws/src
+RUN mkdir -p vmf/vmf_contact_main/openpoints/
+COPY ./vmf_contact_main/openpoints/ ./vmf/vmf_contact_main/openpoints/
+# RUN chmod +x ./vmf/openpoints/install.sh
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/chamfer_dist && python3 setup.py install
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/emd && MAX_JOBS=4 python3 setup.py install
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointnet2_batch && MAX_JOBS=4 python3 setup.py install
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointops && MAX_JOBS=4 python3 setup.py install
+
 COPY ./arm_api2/ ./arm_api2/
 COPY ./arm_api2_msgs/ ./arm_api2_msgs/
 COPY ./arm_api2_py/ ./arm_api2_py/
@@ -168,18 +176,22 @@ COPY ./arm_api2_py/ ./arm_api2_py/
 #     && apt-get install python3-colcon-common-extensions -y
 
 WORKDIR $HOME/wbk_ur10_ws
+RUN apt-get update && apt-get install -y \
+    ros-${ROS_DISTRO}-moveit-visual-tools \
+    ros-${ROS_DISTRO}-moveit-servo \
+    && rm -rf /var/lib/apt/lists/*    
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
     && rosdep update \
     && rosdep install --from-paths src --ignore-src --rosdistro ${ROS_DISTRO} -y \
-    && colcon build --symlink-install
+    && colcon build
 
-RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$USERNAME/.bashrc 
+# RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$USERNAME/.bashrc 
 
 COPY ./docker/entrypoint.sh /
 ENTRYPOINT [ "/entrypoint.sh" ]
 
-# Set the working folder at startup
-WORKDIR $HOME/wbk_ur10_ws
+# # Set the working folder at startup
+# WORKDIR $HOME/wbk_ur10_ws
 
 ###########################################
 # Overlay Image for Workspace and packages #
@@ -189,18 +201,20 @@ FROM overlay_1 AS overlay_2
 # Change the default shell to Bash
 SHELL [ "/bin/bash" , "-c" ]
 
-# Run the install.sh script
-WORKDIR $HOME/wbk_ur10_ws/src
-RUN mkdir /vmf
-COPY ./vmf/ ./vmf/
-RUN chmod +x ./vmf/install.sh
-RUN cd ./vmf/vmf_contact_main/openpoints/cpp/chamfer_dist && python3 setup.py install
-RUN cd ./vmf/vmf_contact_main/openpoints/cpp/emd && MAX_JOBS=4 python3 setup.py install
-RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointnet2_batch && MAX_JOBS=4 python3 setup.py install
-RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointops && MAX_JOBS=4 python3 setup.py install
-# KEEPS FAILING
-# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/subsampling && python3 setup.py build_ext --inplace
+## Run the install.sh script
+# WORKDIR $HOME/wbk_ur10_ws/src
+# RUN mkdir /vmf
+# COPY ./vmf/ ./vmf/
+# RUN chmod +x ./vmf/install.sh
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/chamfer_dist && python3 setup.py install
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/emd && MAX_JOBS=4 python3 setup.py install
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointnet2_batch && MAX_JOBS=4 python3 setup.py install
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointops && MAX_JOBS=4 python3 setup.py install
+## KEEPS FAILING
+## RUN cd ./vmf/vmf_contact_main/openpoints/cpp/subsampling && python3 setup.py build_ext --inplace
 
+WORKDIR $HOME/wbk_ur10_ws/src
+COPY ./vmf/ ./vmf/
 
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
@@ -215,7 +229,7 @@ RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointops && MAX_JOBS=4 python3 setu
 #     appuser
 # USER appuser
 
-WORKDIR /vmf
+WORKDIR $HOME/wbk_ur10_ws
 
 # Add a HEALTHCHECK instruction to ensure the container's health is monitored.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 CMD curl -f http://localhost/ || exit 1
