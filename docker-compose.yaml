@@ -52,3 +52,24 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: overlay_1
+    volumes:
+      - /arm_api_py:/home/$USERNAME/wbk_ur10_ws/src/arm_api_py
+      - /tmp/.X11-unix:/tmp/.X11-unix
+  
+  overlay_2:
+    extends: overlay_1
+    image: overlay_2:v0.0.1
+    container_name: overlay_2
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: overlay_2
+      shm_size: '40gb'
+    shm_size: '40gb'
+    volumes:
+      - /vmf:/home/$USERNAME/wbk_ur10_ws/src/vmf
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    network_mode: host
+    environment:
+      - DISPLAY=:1
+    runtime: nvidia

@@ -80,6 +80,7 @@ RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 
 # Set shell to bash
 ENV SHELL=/bin/bash
+# SHELL [ "/bin/bash" , "-c" ]
 
 # Add repository for ROS2 packages
 RUN apt install software-properties-common -y --no-install-recommends \
@@ -176,6 +177,45 @@ RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$USERNAME/.bashrc
 
 COPY ./docker/entrypoint.sh /
 ENTRYPOINT [ "/entrypoint.sh" ]
- 
+
 # Set the working folder at startup
 WORKDIR $HOME/wbk_ur10_ws
+
+###########################################
+# Overlay Image for Workspace and packages #
+###########################################
+FROM overlay_1 AS overlay_2
+
+# Change the default shell to Bash
+SHELL [ "/bin/bash" , "-c" ]
+
+# Run the install.sh script
+WORKDIR $HOME/wbk_ur10_ws/src
+RUN mkdir /vmf
+COPY ./vmf/ ./vmf/
+RUN chmod +x ./vmf/install.sh
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/chamfer_dist && python3 setup.py install
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/emd && MAX_JOBS=4 python3 setup.py install
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointnet2_batch && MAX_JOBS=4 python3 setup.py install
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointops && MAX_JOBS=4 python3 setup.py install
+# KEEPS FAILING
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/subsampling && python3 setup.py build_ext --inplace
+
+
+# Create a non-privileged user that the app will run under.
+# See https://docs.docker.com/go/dockerfile-user-best-practices/
+# ARG UID=10001
+# RUN adduser \
+#     --disabled-password \
+#     --gecos "" \
+#     --home "/nonexistent" \
+#     --shell "/sbin/nologin" \
+#     --no-create-home \
+#     --uid "${UID}" \
+#     appuser
+# USER appuser
+
+WORKDIR /vmf
+
+# Add a HEALTHCHECK instruction to ensure the container's health is monitored.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 CMD curl -f http://localhost/ || exit 1
