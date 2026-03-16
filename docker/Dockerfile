@@ -30,20 +30,15 @@ RUN groupadd --gid $USER_GID $USERNAME \
 RUN apt-get update && apt-get upgrade -y
 ENV SHELL=/bin/bash
 
+
 # Ref: https://roboticseabass.com/2021/04/21/docker-and-ros/
- 
-# Minimal setup
-RUN apt-get update --fix-missing \
- && apt-get install -y locales lsb-release
-ARG DEBIAN_FRONTEND=noninteractive
-RUN dpkg-reconfigure locales
  
 # Following the ROS2 Humble official setup guide: https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html
 
 # Locale Setup
 RUN locale  # check for UTF-8
 
-RUN apt update && apt install -y --no-install-recommends locales 
+RUN apt update --fix-missing && apt install -y --no-install-recommends locales 
 RUN locale-gen en_US en_US.UTF-8 
 RUN update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 
 RUN export LANG=en_US.UTF-8 
@@ -58,7 +53,10 @@ RUN apt-get update && apt-get upgrade -y && \
     software-properties-common \
     curl \
     python3-pip \
-    python3-opencv \
+    # python3-distutils \
+    # python3-setuptools \
+    # python3-wheel \
+    # python3-opencv \
     git \
     gdb \
     gdbserver \
@@ -149,20 +147,21 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install ninja
+# RUN python3 -m pip install --upgrade "setuptools<70" "wheel" "Cython"
 
 COPY ./vmf/requirements.txt ./
 RUN pip3 install --index-url https://pypi.org/simple -r requirements.txt \
     && pip3 install --index-url https://pypi.org/simple --ignore-installed open3d \
     && pip3 install --index-url https://pypi.org/simple numpy==1.26.4
 
-WORKDIR $HOME/wbk_ur10_ws/src
-RUN mkdir -p vmf/vmf_contact_main/openpoints/
-COPY ./vmf_contact_main/openpoints/ ./vmf/vmf_contact_main/openpoints/
-# RUN chmod +x ./vmf/openpoints/install.sh
-RUN cd ./vmf/vmf_contact_main/openpoints/cpp/chamfer_dist && python3 setup.py install
-RUN cd ./vmf/vmf_contact_main/openpoints/cpp/emd && MAX_JOBS=4 python3 setup.py install
-RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointnet2_batch && MAX_JOBS=4 python3 setup.py install
-RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointops && MAX_JOBS=4 python3 setup.py install
+# WORKDIR $HOME/wbk_ur10_ws/src
+# RUN mkdir -p vmf/vmf_contact_main/openpoints/
+# COPY ./vmf_contact_main/openpoints/ ./vmf/vmf_contact_main/openpoints/
+# # RUN chmod +x ./vmf/openpoints/install.sh
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/chamfer_dist && python3 setup.py install
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/emd && MAX_JOBS=4 python3 setup.py install
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointnet2_batch && MAX_JOBS=4 python3 setup.py install
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointops && MAX_JOBS=4 python3 setup.py install
 
 COPY ./arm_api2/ ./arm_api2/
 COPY ./arm_api2_msgs/ ./arm_api2_msgs/
@@ -201,17 +200,17 @@ FROM overlay_1 AS overlay_2
 # Change the default shell to Bash
 SHELL [ "/bin/bash" , "-c" ]
 
-## Run the install.sh script
-# WORKDIR $HOME/wbk_ur10_ws/src
-# RUN mkdir /vmf
-# COPY ./vmf/ ./vmf/
+# Run the install.sh script
+WORKDIR $HOME/wbk_ur10_ws/src
+RUN mkdir /vmf
+COPY ./vmf/ ./vmf/
 # RUN chmod +x ./vmf/install.sh
-# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/chamfer_dist && python3 setup.py install
-# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/emd && MAX_JOBS=4 python3 setup.py install
-# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointnet2_batch && MAX_JOBS=4 python3 setup.py install
-# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointops && MAX_JOBS=4 python3 setup.py install
-## KEEPS FAILING
-## RUN cd ./vmf/vmf_contact_main/openpoints/cpp/subsampling && python3 setup.py build_ext --inplace
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/chamfer_dist && python3 setup.py install
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/emd && MAX_JOBS=4 python3 setup.py install
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointnet2_batch && MAX_JOBS=4 python3 setup.py install
+RUN cd ./vmf/vmf_contact_main/openpoints/cpp/pointops && MAX_JOBS=4 python3 setup.py install
+# KEEPS FAILING
+# RUN cd ./vmf/vmf_contact_main/openpoints/cpp/subsampling && python3 setup.py build_ext --inplace
 
 WORKDIR $HOME/wbk_ur10_ws/src
 COPY ./vmf/ ./vmf/

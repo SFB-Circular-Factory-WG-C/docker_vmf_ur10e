@@ -21,7 +21,7 @@ services:
       dockerfile: docker/Dockerfile
       args:
         ROS_DISTRO: ${ROS_DISTRO:-humble}
-      # no specific build target; Dockerfile isn't multi‑stage with a 'base' stage
+      network: host
       target: base
     # Interactive shell
     stdin_open: true
@@ -52,6 +52,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: overlay_1
+      network: host
       
     volumes:
       - ./arm_api2_msgs:/home/$USERNAME/wbk_ur10_ws/src/arm_api2_msgs
@@ -67,6 +68,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: overlay_2
+      network: host
       shm_size: '40gb'
       # args:
       #   ROS_DISTRO: humble
