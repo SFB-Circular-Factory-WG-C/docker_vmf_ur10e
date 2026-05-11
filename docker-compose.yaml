@@ -20,7 +20,7 @@ services:
   # Base image containing dependencies.
   base:
     image: ros2_base:v0.0.2
-    container_name: ros2_base
+    container_name: dev_ros2_base
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -52,7 +52,7 @@ services:
   overlay_1:
     extends: base
     image: overlay_1:v0.0.2
-    container_name: overlay_1
+    container_name: dev_overlay_1
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -60,15 +60,15 @@ services:
       network: host
       
     volumes:
-      - ./arm_api2_msgs:/wbk_ur10_ws/src/arm_api2_msgs
-      - ./arm_api2:/wbk_ur10_ws/src/arm_api2
-      - ./arm_api2_py:/wbk_ur10_ws/src/arm_api2_py
+      - ./arm_api2_msgs:/home/$USERNAME/wbk_ur10_ws/src/arm_api2_msgs:rw
+      - ./arm_api2:/home/$USERNAME/wbk_ur10_ws/src/arm_api2:rw
+      - ./arm_api2_py:/home/$USERNAME/wbk_ur10_ws/src/arm_api2_py:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
   
   overlay_2:
     extends: overlay_1
     image: overlay_2:v0.0.2
-    container_name: overlay_2
+    container_name: dev_overlay_2
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -79,7 +79,7 @@ services:
       #   ROS_DISTRO: humble
     shm_size: '40gb'
     volumes:
-      - ./vmf:/wbk_ur10_ws/src/vmf
+      - ./vmf:/home/$USERNAME/wbk_ur10_ws/src/vmf:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
     network_mode: host
     environment:

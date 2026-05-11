@@ -130,7 +130,6 @@ RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> $HOME/.bashrc
 # Overlay Image for Workspace and packages #
 ###########################################
 FROM base AS overlay_1
-
 # Change the default shell to Bash
 SHELL [ "/bin/bash" , "-c" ]
 

@@ -2,8 +2,8 @@
 # Basic entrypoint for ROS Docker containers
 
 # Source ROS 2
-source /opt/ros/${ROS_DISTRO}/setup.bash
-echo "Sourced ROS 2 ${ROS_DISTRO}"
+source /opt/ros/humble/setup.bash
+echo "Sourced ROS 2 humble"
 
 # Source the base workspace, if built
 if [ -f ~/wbk_ur10_ws/install/setup.bash ]
