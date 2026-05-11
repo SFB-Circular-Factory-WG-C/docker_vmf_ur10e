@@ -5,7 +5,7 @@
 # FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 as base
 # FROM nvcr.io/nvidia/pytorch:r36.2.0-pth2.2-py3 as base
 FROM dustynv/pytorch:2.7-r36.4.0 AS base
-ARG USERNAME=USERNAME
+ARG USERNAME=jetson
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 ARG ROS_DISTRO=humble
