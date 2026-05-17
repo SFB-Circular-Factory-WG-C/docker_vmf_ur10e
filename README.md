@@ -5,7 +5,7 @@ Reference: [sea-bass/turtlebot3-behavior-demos](https://github.com/sea-bass/turt
 
 ## How does it work?
 One of the great things about Docker is the ability to create multi-stage builds, where one image stacks on top of the other.
-![docker_stages](docker_stages.png)
+![docker_stages](resources/docker_stages.png)
 - A "source image" which is compatible to our Jetson Orin Nano.
 - A "base image" on top of it which installs ROS and other dependencies we need.
 - A "overlay_1 image" which mounts arm_api packages to the container.
