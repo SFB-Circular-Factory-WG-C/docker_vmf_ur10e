@@ -4,7 +4,12 @@
 #
 # To build the images:
 #   docker compose build
-#
+# (By default, picks up a `docker-compose.yaml` and `.env` file.)
+# (or explicitly specify the files to use with --file and --env-file flags)
+# (docker compose --file docker-compose.yaml --env-file .env build)
+# 
+# (It's suggested to build the image overlay_1 first, then overlay_2, otherwise the Jetson might run out of memory during the build process.)
+
 # To start up a specific service by name:
 #   docker compose up <service_name>
 #
@@ -14,13 +19,13 @@
 services:
   # Base image containing dependencies.
   base:
-    image: ros2_base:v0.0.1
-    container_name: ros2_base
+    image: ros2_base:v0.0.2
+    container_name: dev_ros2_base
     build:
       context: .
       dockerfile: docker/Dockerfile
       args:
-        ROS_DISTRO: ${ROS_DISTRO:-humble}
+        ROS_DISTRO: ${ROS_DISTRO:?}
       network: host
       target: base
     # Interactive shell
@@ -34,10 +39,10 @@ services:
     runtime: nvidia
     environment:
       # Allows graphical programs in the container.
-      - DISPLAY=${DISPLAY:-:1}
+      - DISPLAY=${DISPLAY:?}
       - QT_X11_NO_MITSHM=1
       - NVIDIA_DRIVER_CAPABILITIES=all
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:?}
     volumes:
       # Allows graphical programs in the container.
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
@@ -46,8 +51,8 @@ services:
     # overlay_1 extends the base image and adds the UR10-specific workspace and arm_api2 packages.
   overlay_1:
     extends: base
-    image: overlay_1:v0.0.1
-    container_name: overlay_1
+    image: overlay_1:v0.0.2
+    container_name: dev_overlay_1
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -55,15 +60,15 @@ services:
       network: host
       
     volumes:
-      - ./arm_api2_msgs:/home/$USERNAME/wbk_ur10_ws/src/arm_api2_msgs
-      - ./arm_api2:/home/$USERNAME/wbk_ur10_ws/src/arm_api2
-      - ./arm_api2_py:/home/$USERNAME/wbk_ur10_ws/src/arm_api2_py
+      - ./arm_api2_msgs:/home/$USERNAME/wbk_ur10_ws/src/arm_api2_msgs:rw
+      - ./arm_api2:/home/$USERNAME/wbk_ur10_ws/src/arm_api2:rw
+      - ./arm_api2_py:/home/$USERNAME/wbk_ur10_ws/src/arm_api2_py:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
   
   overlay_2:
     extends: overlay_1
-    image: overlay_2:v0.0.1
-    container_name: overlay_2
+    image: overlay_2:v0.0.2
+    container_name: dev_overlay_2
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -74,9 +79,9 @@ services:
       #   ROS_DISTRO: humble
     shm_size: '40gb'
     volumes:
-      - ./vmf:/home/$USERNAME/wbk_ur10_ws/src/vmf
+      - ./vmf:/home/$USERNAME/wbk_ur10_ws/src/vmf:rw
       - /tmp/.X11-unix:/tmp/.X11-unix
     network_mode: host
     environment:
-      - DISPLAY=:1
+      - DISPLAY=${DISPLAY:?}
     runtime: nvidia
